@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'mentor_detail_screen.dart';
 import 'dart:convert';
 
 class MentorsScreen extends StatefulWidget {
@@ -30,19 +31,21 @@ class _MentorsScreenState extends State<MentorsScreen> {
   }
 
   // Handle delete mentor
-  Future<void> deleteMentor(String mentorId) async {
-    final response = await http.delete(Uri.parse('http://192.168.0.103:3000/api/admin/users/$mentorId'));
+ Future<void> deleteMentor(String mentorId) async {
+  final response = await http.delete(
+    Uri.parse('http://192.168.0.103:3000/api/admin/users/$mentorId'),
+  );
 
-    if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Mentor deleted successfully')));
-      setState(() {
-        mentors = fetchMentors(); // Refresh the list after deletion
-      });
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete mentor')));
-    }
+  if (response.statusCode == 200) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Mentor deleted successfully')));
+
+    setState(() {
+      mentors = fetchMentors(); // ✅ Refresh the mentor list after deletion
+    });
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete mentor')));
   }
-
+}
   // Handle edit mentor
   Future<void> editMentor(String mentorId) async {
     // Navigate to an edit screen or open a dialog to edit mentor details
@@ -99,6 +102,7 @@ class _MentorsScreenState extends State<MentorsScreen> {
     }
   }
 
+  // Inside _MentorsScreenState:
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -122,10 +126,10 @@ class _MentorsScreenState extends State<MentorsScreen> {
                 if (mentor is Map) {
                   String fullName = mentor['firstName'] != null && mentor['lastName'] != null
                       ? '${mentor['firstName']} ${mentor['lastName']}'
-                      : 'No Name'; 
-                  String email = mentor['email'] ?? 'No email'; 
-                  String jobTitle = mentor['jobTitle'] ?? 'No job title'; 
-                  String mentorId = mentor['_id']; // Assuming mentor has an _id field
+                      : 'No Name';
+                  String email = mentor['email'] ?? 'No email';
+                  String jobTitle = mentor['jobTitle'] ?? 'No job title';
+                  String mentorId = mentor['_id'];
 
                   return ListTile(
                     title: Text(fullName),
@@ -133,16 +137,31 @@ class _MentorsScreenState extends State<MentorsScreen> {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        // Edit button
                         IconButton(
                           icon: Icon(Icons.edit),
                           onPressed: () {
-                            editMentor(mentorId); // Trigger the edit function
+                            editMentor(mentorId);
                           },
                         ),
+                        // Delete button
                         IconButton(
                           icon: Icon(Icons.delete),
                           onPressed: () {
-                            deleteMentor(mentorId); // Trigger the delete function
+                            deleteMentor(mentorId);
+                          },
+                        ),
+                        // Eye icon to view the mentor's details
+                        IconButton(
+                          icon: Icon(Icons.visibility),
+                          onPressed: () {
+                            // Navigate to mentor details screen
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => MentorDetailScreen(mentor: mentor),
+                              ),
+                            );
                           },
                         ),
                       ],

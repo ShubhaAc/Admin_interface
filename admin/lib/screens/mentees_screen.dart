@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'mentee_detail_screen.dart';
 import 'package:http/http.dart' as http;
 
 class MenteeListPage extends StatefulWidget {
@@ -9,10 +10,15 @@ class MenteeListPage extends StatefulWidget {
 
 class _MenteeListPageState extends State<MenteeListPage> {
   Future<List<Mentee>> fetchMentees() async {
-    final response = await http.get(Uri.parse('http://192.168.0.103:3000/api/admin/mentees'));
+    final response =
+        await http.get(Uri.parse('http://192.168.0.103:3000/api/admin/mentees'));
 
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
+      
+      // Optional: Only show verified mentees if needed
+      // data = data.where((mentee) => mentee['verified'] == true).toList();
+      
       return data.map((json) => Mentee.fromJson(json)).toList();
     } else {
       throw Exception('Failed to load mentees');
@@ -20,22 +26,25 @@ class _MenteeListPageState extends State<MenteeListPage> {
   }
 
   Future<void> deleteMentee(String id) async {
-    final response = await http.delete(Uri.parse('http://192.168.0.103:3000/api/admin/users/$id'));
+    final response =
+        await http.delete(Uri.parse('http://192.168.0.103:3000/api/admin/users/$id'));
 
     if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Mentee deleted successfully')));
-      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Mentee deleted successfully')));
+      setState(() {
+        fetchMentees();
+      });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete mentee')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete mentee')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Mentee List'),
-      ),
+      appBar: AppBar(title: Text('Mentee List')),
       body: FutureBuilder<List<Mentee>>(
         future: fetchMentees(),
         builder: (context, snapshot) {
@@ -51,7 +60,7 @@ class _MenteeListPageState extends State<MenteeListPage> {
               itemCount: mentees.length,
               itemBuilder: (context, index) {
                 final mentee = mentees[index];
-                String fullName = mentee.firstName != null && mentee.lastName != null
+                String fullName = mentee.firstName.isNotEmpty
                     ? '${mentee.firstName} ${mentee.lastName}'
                     : 'No Name';
 
@@ -64,11 +73,16 @@ class _MenteeListPageState extends State<MenteeListPage> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Edit button
+                      // Optional: Verify Button (if needed in future)
+                      // mentee.verified
+                      //     ? Icon(Icons.verified, color: Colors.green)
+                      //     : ElevatedButton(
+                      //         onPressed: () => verifyMentee(mentee.id),
+                      //         child: Text('Verify'),
+                      //       ),
                       IconButton(
                         icon: Icon(Icons.edit),
                         onPressed: () {
-                          // Navigate to edit page (implement EditMenteePage)
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -77,11 +91,22 @@ class _MenteeListPageState extends State<MenteeListPage> {
                           );
                         },
                       ),
-                      // Delete button
                       IconButton(
                         icon: Icon(Icons.delete),
                         onPressed: () {
-                          deleteMentee(mentee.id); // Call delete function
+                          deleteMentee(mentee.id);
+                        },
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.visibility),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  MenteeDetailScreen(mentee: mentee),
+                            ),
+                          );
                         },
                       ),
                     ],
@@ -102,6 +127,7 @@ class Mentee {
   final String lastName;
   final String email;
   final String profilePicture;
+  // final bool verified;  // Uncomment if verification is needed
 
   Mentee({
     required this.id,
@@ -109,6 +135,7 @@ class Mentee {
     required this.lastName,
     required this.email,
     required this.profilePicture,
+    // required this.verified,  // Uncomment if verification is needed
   });
 
   factory Mentee.fromJson(Map<String, dynamic> json) {
@@ -118,14 +145,14 @@ class Mentee {
       lastName: json['lastName'] ?? '',
       email: json['email'] ?? '',
       profilePicture: json['profilePicture'] ?? '/uploads/profilePictures/default.png',
+      // verified: json['verified'] ?? false,  // Uncomment if verification is needed
     );
   }
 }
 
-// EditMenteePage is a simple page to edit mentee details
+// Edit Mentee Page
 class EditMenteePage extends StatefulWidget {
   final Mentee mentee;
-
   EditMenteePage({required this.mentee});
 
   @override
@@ -161,18 +188,18 @@ class _EditMenteePageState extends State<EditMenteePage> {
 
     if (response.statusCode == 200) {
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Mentee updated successfully')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Mentee updated successfully')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update mentee')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to update mentee')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Edit Mentee'),
-      ),
+      appBar: AppBar(title: Text('Edit Mentee')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
