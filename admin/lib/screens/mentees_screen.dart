@@ -10,8 +10,7 @@ class MenteeListPage extends StatefulWidget {
 
 class _MenteeListPageState extends State<MenteeListPage> {
   Future<List<Mentee>> fetchMentees() async {
-    final response =
-        await http.get(Uri.parse('http://192.168.0.103:3000/api/admin/mentees'));
+    final response = await http.get(Uri.parse('http://192.168.0.103:3000/api/admin/mentees'));
 
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
@@ -25,9 +24,35 @@ class _MenteeListPageState extends State<MenteeListPage> {
     }
   }
 
+   void confirmDeleteMentee(String id) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Deletion'),
+          content: Text('Are you sure you want to delete this mentee?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+              child: Text('Cancel', style: TextStyle(color: Colors.black)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                deleteMentee(id); // Proceed with deletion
+              },
+              child: Text('Delete', style: TextStyle(color: Colors.black)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
   Future<void> deleteMentee(String id) async {
-    final response =
-        await http.delete(Uri.parse('http://192.168.0.103:3000/api/admin/users/$id'));
+    final response = await http.delete(Uri.parse('http://192.168.0.103:3000/api/admin/users/$id'));
 
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -65,21 +90,23 @@ class _MenteeListPageState extends State<MenteeListPage> {
                     : 'No Name';
 
                 return ListTile(
-                  leading: mentee.profilePicture.isNotEmpty
-                      ? CircleAvatar(backgroundImage: NetworkImage(mentee.profilePicture))
-                      : CircleAvatar(child: Icon(Icons.person)),
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.teal,
+                    child: Text(
+                      mentee.email.isNotEmpty
+                          ? mentee.email[0].toUpperCase()
+                          : 'U',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                   title: Text(fullName),
                   subtitle: Text(mentee.email),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Optional: Verify Button (if needed in future)
-                      // mentee.verified
-                      //     ? Icon(Icons.verified, color: Colors.green)
-                      //     : ElevatedButton(
-                      //         onPressed: () => verifyMentee(mentee.id),
-                      //         child: Text('Verify'),
-                      //       ),
                       IconButton(
                         icon: Icon(Icons.edit),
                         onPressed: () {
@@ -91,20 +118,20 @@ class _MenteeListPageState extends State<MenteeListPage> {
                           );
                         },
                       ),
-                      IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () {
-                          deleteMentee(mentee.id);
-                        },
-                      ),
+                     IconButton(
+  icon: Icon(Icons.delete),
+  onPressed: () {
+    confirmDeleteMentee(mentee.id);
+  },
+),
+
                       IconButton(
                         icon: Icon(Icons.visibility),
                         onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  MenteeDetailScreen(mentee: mentee),
+                              builder: (context) => MenteeDetailScreen(mentee: mentee),
                             ),
                           );
                         },
@@ -150,7 +177,7 @@ class Mentee {
   }
 }
 
-// Edit Mentee Page
+// Edit Mentee Page with similar look to mentor edit page
 class EditMenteePage extends StatefulWidget {
   final Mentee mentee;
   EditMenteePage({required this.mentee});
@@ -160,7 +187,6 @@ class EditMenteePage extends StatefulWidget {
 }
 
 class _EditMenteePageState extends State<EditMenteePage> {
-  final _formKey = GlobalKey<FormState>();
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
   late TextEditingController _emailController;
@@ -199,54 +225,108 @@ class _EditMenteePageState extends State<EditMenteePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Edit Mentee')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _firstNameController,
-                decoration: InputDecoration(labelText: 'First Name'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter first name';
-                  }
-                  return null;
-                },
+      appBar: AppBar(
+        title: Text('Edit Mentee Profile'),
+        backgroundColor: Color(0xFFF4F6F9),
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Profile Image and Name Row
+            Row(
+              children: [
+               CircleAvatar(
+  radius: 50,
+  backgroundColor: Colors.teal, // Background color for the avatar
+  child: Text(
+    widget.mentee.email.isNotEmpty ? widget.mentee.email[0].toUpperCase() : 'U', // First letter of email
+    style: TextStyle(
+      fontSize: 40,
+      color: Colors.white,
+      fontWeight: FontWeight.bold,
+    ),
+  ),
+),
+
+                SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // First & Last Name Fields (without boxes)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _firstNameController,
+                              decoration: InputDecoration(
+                                labelText: 'First Name',
+                                labelStyle: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: _lastNameController,
+                              decoration: InputDecoration(
+                                labelText: 'Last Name',
+                                labelStyle: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 24),
+            // Email Field
+            Text(
+              'Email:',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
               ),
-              TextFormField(
-                controller: _lastNameController,
-                decoration: InputDecoration(labelText: 'Last Name'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter last name';
-                  }
-                  return null;
-                },
+            ),
+            SizedBox(height: 6),
+            TextField(
+              controller: _emailController,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'Enter email',
               ),
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(labelText: 'Email'),
-                validator: (value) {
-                  if (value == null || value.isEmpty || !value.contains('@')) {
-                    return 'Please enter a valid email';
-                  }
-                  return null;
-                },
+            ),
+            SizedBox(height: 24),
+            // Save Button
+            Center(
+              child: SizedBox(
+                width: 400,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                  onPressed: updateMentee,
+                  child: Text(
+                    'Save Changes',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    updateMentee();
-                  }
-                },
-                child: Text('Save Changes'),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

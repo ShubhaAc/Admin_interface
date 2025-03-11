@@ -42,12 +42,19 @@ class MenteeDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundImage: mentee.profilePicture.isNotEmpty
-                  ? NetworkImage(mentee.profilePicture)
-                  : AssetImage('assets/default_avatar.png') as ImageProvider,
-            ),
+          CircleAvatar(
+  radius: 50,
+  backgroundColor: Colors.teal, // You can change the background color as needed
+  child: Text(
+    mentee.email.isNotEmpty ? mentee.email[0].toUpperCase() : 'U', // Show the first letter of the email
+    style: TextStyle(
+      fontSize: 40,
+      color: Colors.white,
+      fontWeight: FontWeight.bold,
+    ),
+  ),
+),
+
             SizedBox(height: 20),
             Text(
               'First Name: ${mentee.firstName}',

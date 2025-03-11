@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 import 'mentors_screen.dart';
 import 'mentees_screen.dart';
 
@@ -85,7 +84,6 @@ class _DashboardPageState extends State<DashboardPage> {
             buildSidebarItem(Icons.person, 'Mentees', false, () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => MenteeListPage()));
             }),
-            buildSidebarItem(Icons.request_page, 'Requests', false),
           ],
         ),
       ),
